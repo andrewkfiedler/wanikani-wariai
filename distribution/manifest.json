@@ -1,0 +1,20 @@
+{
+
+    "manifest_version": 2,
+    "name": "Wanikani-Wariai",
+    "version": "1.2",
+  
+    "description": "Adds some time tracking to Wanikani reviews. ",
+  
+    "icons": {
+      "48": "icon.png"
+    },
+  
+    "content_scripts": [
+      {
+        "matches": ["https://www.wanikani.com/review/session*"],
+        "js": ["index.js"]
+      }
+    ]
+  
+  }
