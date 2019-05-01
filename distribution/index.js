@@ -656,7 +656,7 @@ exports = module.exports = __webpack_require__(2)(false);
 
 
 // module
-exports.push([module.i, "#option-last-items i, #option-last-items button,\n#option-item-info i,\n#option-item-info button,\n#option-kana-chart i,\n#option-kana-chart button,\n#option-audio i,\n#option-audio button {\n  position: relative; }\n\n#option-last-items i:after, #option-last-items button:after,\n#option-item-info i:after,\n#option-item-info button:after,\n#option-kana-chart i:after,\n#option-kana-chart button:after,\n#option-audio i:after,\n#option-audio button:after {\n  font-family: \"Source Sans Pro\", sans-serif;\n  padding: 1px 4px;\n  border: 1px solid #3c3c3c;\n  border-radius: 1px;\n  -webkit-box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.1);\n  -moz-box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.1);\n  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.1);\n  position: absolute;\n  color: #294ddb;\n  width: 10px;\n  opacity: .4;\n  left: 26px;\n  top: -4px; }\n\n#option-last-items i:after {\n  content: ','; }\n\n#option-item-info i:after {\n  content: 'F'; }\n\n#option-kana-chart i:after {\n  content: '/'; }\n\n#option-audio button:after {\n  left: 17px;\n  content: 'J'; }\n\n#all-info {\n  position: relative; }\n\n#all-info::after {\n  font-family: \"Source Sans Pro\", sans-serif;\n  padding: 1px 4px;\n  border: 1px solid #3c3c3c;\n  border-radius: 1px;\n  -webkit-box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.1);\n  -moz-box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.1);\n  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.1);\n  position: absolute;\n  color: #294ddb;\n  width: auto;\n  opacity: .4;\n  content: 'SPACEBAR';\n  position: absolute;\n  left: calc(50% + 87px);\n  top: 50%;\n  transform: translateY(-50%); }\n", ""]);
+exports.push([module.i, ".wariai-stats {\n  position: absolute;\n  bottom: 0;\n  right: 0;\n  margin: 0;\n  padding: 10px 20px;\n  color: #fff;\n  font-family: \"Source Sans Pro\", sans-serif;\n  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);\n  font-size: 1rem;\n  line-height: 1rem;\n  opacity: 0.6; }\n  .wariai-stats div {\n    display: inline; }\n", ""]);
 
 // exports
 
@@ -694,6 +694,89 @@ if(false) {}
 
 
 __webpack_require__(4);
+
+var dates = {
+  sessionStart: Date.now(),
+  lastAnswer: Date.now()
+};
+
+var isReady = function isReady() {
+  return document.querySelector("#stats") !== undefined;
+};
+
+var lastCompletedCount = 0;
+
+var getCompletedCount = function getCompletedCount() {
+  var completedCount = parseInt(document.querySelector("#completed-count").innerHTML);
+  if (completedCount !== lastCompletedCount) {
+    lastCompletedCount = completedCount;
+    dates.lastAnswer = Date.now();
+  }
+  return completedCount;
+};
+
+var getAvailableCount = function getAvailableCount() {
+  return parseInt(document.querySelector("#available-count").innerHTML);
+};
+
+var stopWatchElement = document.createElement("div");
+stopWatchElement.style.display = "inline";
+stopWatchElement.innerHTML = "\n    <i class=\"icon-time\" /> \n    <div id=\"wariai-stopwatch\"></div>\n  ";
+
+var timePerAnswerElement = document.createElement("div");
+timePerAnswerElement.style.display = "inline";
+timePerAnswerElement.innerHTML = "\n  <i class=\"icon-dashboard\" /> \n    <div id=\"wariai-rate\"></div>\n  ";
+
+var finishElement = document.createElement("div");
+finishElement.style.display = "inline";
+finishElement.innerHTML = "\n  <i class=\"icon-sun\" /> \n    <div id=\"wariai-finish\"></div>\n  ";
+
+var updateStopwatch = function updateStopwatch() {
+  var timeSinceLastAnswer = Math.floor((Date.now() - dates.lastAnswer) / 1000);
+  stopWatchElement.querySelector("div").innerHTML = timeSinceLastAnswer;
+};
+
+var updateTimePerAnswer = function updateTimePerAnswer() {
+  var totalTime = (Date.now() - dates.sessionStart) / 1000;
+  var completedCount = getCompletedCount();
+  timePerAnswerElement.querySelector("div").innerHTML = Math.floor(totalTime / completedCount);
+};
+
+var updateFinish = function updateFinish() {
+  var totalTime = Date.now() - dates.sessionStart;
+  var completedCount = getCompletedCount();
+  var rate = Math.floor(totalTime / completedCount);
+  var amountLeft = getAvailableCount();
+  var estimateTimeRemaining = amountLeft * rate;
+  var estimateFinishDate = new Date(Date.now() + estimateTimeRemaining);
+  var finishTime = estimateFinishDate.toLocaleString().split(", ")[1];
+  finishElement.querySelector("div").innerHTML = finishTime;
+};
+
+var start = function start() {
+  var container = document.createElement("div");
+  container.classList.add("wariai-stats");
+  container.appendChild(stopWatchElement);
+  container.appendChild(timePerAnswerElement);
+  container.appendChild(finishElement);
+  document.querySelector("#character").appendChild(container);
+  setInterval(function () {
+    updateStopwatch();
+    updateTimePerAnswer();
+    updateFinish();
+  }, 500);
+};
+
+var intervalId = setInterval(function () {
+  if (isReady) {
+    clearInterval(intervalId);
+    start();
+  }
+}, 1000);
+
+document.onerror = function (e) {
+  alert(e);
+};
 
 /***/ })
 /******/ ]);

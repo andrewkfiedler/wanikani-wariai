@@ -4,7 +4,7 @@
     "name": "Wanikani-Wariai",
     "version": "1.2",
   
-    "description": "Adds some time tracking to Wanikani reviews. ",
+    "description": "Adds some keyboard accesibility to Wanikani reviews.  Coming soon for lessons as well (I don't have any lessons to test on yet!).",
   
     "icons": {
       "48": "icon.png"

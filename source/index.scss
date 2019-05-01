@@ -1,65 +1,16 @@
-@mixin hotKeyBox($width: 10px) {
+.wariai-stats {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  margin: 0;
+  padding: 10px 20px;
+  color: #fff;
   font-family: "Source Sans Pro", sans-serif;
-  padding: 1px 4px;
-  border: 1px solid #3c3c3c;
-  border-radius: 1px;
-  -webkit-box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
-  -moz-box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
-  box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
-  position: absolute;
-  color: #294ddb;
-  width: $width;
-  opacity: .4;
-}
-
-#option-last-items,
-#option-item-info,
-#option-kana-chart,
-#option-audio {
-  i, button {
-    position: relative;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);
+  font-size: 1rem;
+  line-height: 1rem;
+  opacity: 0.6;
+  div {
+    display: inline;
   }
-  i:after, button:after {
-    @include hotKeyBox();
-    left: 26px;
-    top: -4px;
-  }
-}
-
-
-#option-last-items {
-  i:after {
-    content: ',';
-  }
-}
-
-#option-item-info {
-  i:after {
-    content: 'F';
-  }
-}
-
-#option-kana-chart {
-  i:after {
-    content: '/';
-  }
-}
-
-#option-audio {
-  button:after {
-    left: 17px;
-    content: 'J';
-  }
-}
-
-#all-info {
-  position: relative;
-}
-#all-info::after {
-  @include hotKeyBox(auto);
-  content: 'SPACEBAR';
-  position: absolute;
-  left: calc(50% + 87px);
-  top: 50%;
-  transform: translateY(-50%);
 }
