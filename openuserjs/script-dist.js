@@ -99,106 +99,224 @@ var inline_src = (<><![CDATA[
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 5);
+/******/ 	return __webpack_require__(__webpack_require__.s = 0);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
 
 
-/**
- * When source maps are enabled, `style-loader` uses a link element with a data-uri to
- * embed the css on the page. This breaks all relative urls because now they are relative to a
- * bundle instead of the current page.
- *
- * One solution is to only use full urls, but that may be impossible.
- *
- * Instead, this function "fixes" the relative urls to be absolute according to the current page location.
- *
- * A rudimentary test suite is located at `test/fixUrls.js` and can be run via the `npm test` command.
- *
- */
+__webpack_require__(1);
 
-module.exports = function (css) {
-  // get current location
-  var location = typeof window !== "undefined" && window.location;
-
-  if (!location) {
-    throw new Error("fixUrls requires window.location");
-  }
-
-	// blank or null?
-	if (!css || typeof css !== "string") {
-	  return css;
-  }
-
-  var baseUrl = location.protocol + "//" + location.host;
-  var currentDir = baseUrl + location.pathname.replace(/\/[^\/]*$/, "/");
-
-	// convert each url(...)
-	/*
-	This regular expression is just a way to recursively match brackets within
-	a string.
-
-	 /url\s*\(  = Match on the word "url" with any whitespace after it and then a parens
-	   (  = Start a capturing group
-	     (?:  = Start a non-capturing group
-	         [^)(]  = Match anything that isn't a parentheses
-	         |  = OR
-	         \(  = Match a start parentheses
-	             (?:  = Start another non-capturing groups
-	                 [^)(]+  = Match anything that isn't a parentheses
-	                 |  = OR
-	                 \(  = Match a start parentheses
-	                     [^)(]*  = Match anything that isn't a parentheses
-	                 \)  = Match a end parentheses
-	             )  = End Group
-              *\) = Match anything and then a close parens
-          )  = Close non-capturing group
-          *  = Match anything
-       )  = Close capturing group
-	 \)  = Match a close parens
-
-	 /gi  = Get all matches, not the first.  Be case insensitive.
-	 */
-	var fixedCss = css.replace(/url\s*\(((?:[^)(]|\((?:[^)(]+|\([^)(]*\))*\))*)\)/gi, function(fullMatch, origUrl) {
-		// strip quotes (if they exist)
-		var unquotedOrigUrl = origUrl
-			.trim()
-			.replace(/^"(.*)"$/, function(o, $1){ return $1; })
-			.replace(/^'(.*)'$/, function(o, $1){ return $1; });
-
-		// already a full url? no change
-		if (/^(#|data:|http:\/\/|https:\/\/|file:\/\/\/|\s*$)/i.test(unquotedOrigUrl)) {
-		  return fullMatch;
-		}
-
-		// convert the url to a full url
-		var newUrl;
-
-		if (unquotedOrigUrl.indexOf("//") === 0) {
-		  	//TODO: should we add protocol?
-			newUrl = unquotedOrigUrl;
-		} else if (unquotedOrigUrl.indexOf("/") === 0) {
-			// path should be relative to the base url
-			newUrl = baseUrl + unquotedOrigUrl; // already starts with '/'
-		} else {
-			// path should be relative to current directory
-			newUrl = currentDir + unquotedOrigUrl.replace(/^\.\//, ""); // Strip leading './'
-		}
-
-		// send back the fixed url(...)
-		return "url(" + JSON.stringify(newUrl) + ")";
-	});
-
-	// send back the fixed css
-	return fixedCss;
+var dates = {
+  sessionStart: Date.now(),
+  lastAnswer: Date.now()
 };
 
+var isReady = function isReady() {
+  return document.querySelector("#stats") !== undefined;
+};
+
+var lastCompletedCount = 0;
+
+var getCompletedCount = function getCompletedCount() {
+  var completedCount = parseInt(document.querySelector("#completed-count").innerHTML);
+  if (completedCount !== lastCompletedCount) {
+    lastCompletedCount = completedCount;
+    dates.lastAnswer = Date.now();
+  }
+  return completedCount;
+};
+
+var getAvailableCount = function getAvailableCount() {
+  return parseInt(document.querySelector("#available-count").innerHTML);
+};
+
+var stopWatchElement = document.createElement("div");
+stopWatchElement.style.display = "inline";
+stopWatchElement.innerHTML = "\n    <i class=\"icon-time\" /> \n    <div id=\"wariai-stopwatch\"></div>\n  ";
+
+var timePerAnswerElement = document.createElement("div");
+timePerAnswerElement.style.display = "inline";
+timePerAnswerElement.innerHTML = "\n  <i class=\"icon-dashboard\" /> \n    <div id=\"wariai-rate\"></div>\n  ";
+
+var finishElement = document.createElement("div");
+finishElement.style.display = "inline";
+finishElement.innerHTML = "\n  <i class=\"icon-sun\" /> \n    <div id=\"wariai-finish\"></div>\n  ";
+
+var updateStopwatch = function updateStopwatch() {
+  var timeSinceLastAnswer = Math.floor((Date.now() - dates.lastAnswer) / 1000);
+  stopWatchElement.querySelector("div").innerHTML = timeSinceLastAnswer;
+};
+
+var updateTimePerAnswer = function updateTimePerAnswer() {
+  var totalTime = (Date.now() - dates.sessionStart) / 1000;
+  var completedCount = getCompletedCount();
+  timePerAnswerElement.querySelector("div").innerHTML = Math.floor(totalTime / completedCount);
+};
+
+var updateFinish = function updateFinish() {
+  var totalTime = Date.now() - dates.sessionStart;
+  var completedCount = getCompletedCount();
+  var rate = Math.floor(totalTime / completedCount);
+  var amountLeft = getAvailableCount();
+  var estimateTimeRemaining = amountLeft * rate;
+  var estimateFinishDate = new Date(Date.now() + estimateTimeRemaining);
+  var finishTime = estimateFinishDate.toLocaleString().split(", ")[1];
+  finishElement.querySelector("div").innerHTML = finishTime;
+};
+
+var start = function start() {
+  var container = document.createElement("div");
+  container.classList.add("wariai-stats");
+  container.appendChild(stopWatchElement);
+  container.appendChild(timePerAnswerElement);
+  container.appendChild(finishElement);
+  document.querySelector("#character").appendChild(container);
+  setInterval(function () {
+    updateStopwatch();
+    updateTimePerAnswer();
+    updateFinish();
+  }, 500);
+};
+
+var intervalId = setInterval(function () {
+  if (isReady) {
+    clearInterval(intervalId);
+    start();
+  }
+}, 1000);
+
+document.onerror = function (e) {
+  alert(e);
+};
 
 /***/ }),
 /* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+var content = __webpack_require__(2);
+
+if(typeof content === 'string') content = [[module.i, content, '']];
+
+var transform;
+var insertInto;
+
+
+
+var options = {"hmr":true}
+
+options.transform = transform
+options.insertInto = undefined;
+
+var update = __webpack_require__(4)(content, options);
+
+if(content.locals) module.exports = content.locals;
+
+if(false) {}
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(3)(false);
+// imports
+
+
+// module
+exports.push([module.i, ".wariai-stats {\n  position: absolute;\n  bottom: 0;\n  right: 0;\n  margin: 0;\n  padding: 10px 20px;\n  color: #fff;\n  font-family: \"Source Sans Pro\", sans-serif;\n  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);\n  font-size: 1rem;\n  line-height: 1rem;\n  opacity: 0.6; }\n  .wariai-stats div {\n    display: inline; }\n", ""]);
+
+// exports
+
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports) {
+
+/*
+	MIT License http://www.opensource.org/licenses/mit-license.php
+	Author Tobias Koppers @sokra
+*/
+// css base code, injected by the css-loader
+module.exports = function(useSourceMap) {
+	var list = [];
+
+	// return the list of modules as css string
+	list.toString = function toString() {
+		return this.map(function (item) {
+			var content = cssWithMappingToString(item, useSourceMap);
+			if(item[2]) {
+				return "@media " + item[2] + "{" + content + "}";
+			} else {
+				return content;
+			}
+		}).join("");
+	};
+
+	// import a list of modules into the list
+	list.i = function(modules, mediaQuery) {
+		if(typeof modules === "string")
+			modules = [[null, modules, ""]];
+		var alreadyImportedModules = {};
+		for(var i = 0; i < this.length; i++) {
+			var id = this[i][0];
+			if(typeof id === "number")
+				alreadyImportedModules[id] = true;
+		}
+		for(i = 0; i < modules.length; i++) {
+			var item = modules[i];
+			// skip already imported module
+			// this implementation is not 100% perfect for weird media query combinations
+			//  when a module is imported multiple times with different media queries.
+			//  I hope this will never occur (Hey this way we have smaller bundles)
+			if(typeof item[0] !== "number" || !alreadyImportedModules[item[0]]) {
+				if(mediaQuery && !item[2]) {
+					item[2] = mediaQuery;
+				} else if(mediaQuery) {
+					item[2] = "(" + item[2] + ") and (" + mediaQuery + ")";
+				}
+				list.push(item);
+			}
+		}
+	};
+	return list;
+};
+
+function cssWithMappingToString(item, useSourceMap) {
+	var content = item[1] || '';
+	var cssMapping = item[3];
+	if (!cssMapping) {
+		return content;
+	}
+
+	if (useSourceMap && typeof btoa === 'function') {
+		var sourceMapping = toComment(cssMapping);
+		var sourceURLs = cssMapping.sources.map(function (source) {
+			return '/*# sourceURL=' + cssMapping.sourceRoot + source + ' */'
+		});
+
+		return [content].concat(sourceURLs).concat([sourceMapping]).join('\n');
+	}
+
+	return [content].join('\n');
+}
+
+// Adapted from convert-source-map (MIT)
+function toComment(sourceMap) {
+	// eslint-disable-next-line no-undef
+	var base64 = btoa(unescape(encodeURIComponent(JSON.stringify(sourceMap))));
+	var data = 'sourceMappingURL=data:application/json;charset=utf-8;base64,' + base64;
+
+	return '/*# ' + data + ' */';
+}
+
+
+/***/ }),
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
@@ -264,7 +382,7 @@ var singleton = null;
 var	singletonCounter = 0;
 var	stylesInsertedAtTop = [];
 
-var	fixUrls = __webpack_require__(0);
+var	fixUrls = __webpack_require__(5);
 
 module.exports = function(list, options) {
 	if (typeof DEBUG !== "undefined" && DEBUG) {
@@ -584,217 +702,99 @@ function updateLink (link, options, obj) {
 
 
 /***/ }),
-/* 2 */
+/* 5 */
 /***/ (function(module, exports) {
 
-/*
-	MIT License http://www.opensource.org/licenses/mit-license.php
-	Author Tobias Koppers @sokra
-*/
-// css base code, injected by the css-loader
-module.exports = function(useSourceMap) {
-	var list = [];
 
-	// return the list of modules as css string
-	list.toString = function toString() {
-		return this.map(function (item) {
-			var content = cssWithMappingToString(item, useSourceMap);
-			if(item[2]) {
-				return "@media " + item[2] + "{" + content + "}";
-			} else {
-				return content;
-			}
-		}).join("");
-	};
+/**
+ * When source maps are enabled, `style-loader` uses a link element with a data-uri to
+ * embed the css on the page. This breaks all relative urls because now they are relative to a
+ * bundle instead of the current page.
+ *
+ * One solution is to only use full urls, but that may be impossible.
+ *
+ * Instead, this function "fixes" the relative urls to be absolute according to the current page location.
+ *
+ * A rudimentary test suite is located at `test/fixUrls.js` and can be run via the `npm test` command.
+ *
+ */
 
-	// import a list of modules into the list
-	list.i = function(modules, mediaQuery) {
-		if(typeof modules === "string")
-			modules = [[null, modules, ""]];
-		var alreadyImportedModules = {};
-		for(var i = 0; i < this.length; i++) {
-			var id = this[i][0];
-			if(typeof id === "number")
-				alreadyImportedModules[id] = true;
-		}
-		for(i = 0; i < modules.length; i++) {
-			var item = modules[i];
-			// skip already imported module
-			// this implementation is not 100% perfect for weird media query combinations
-			//  when a module is imported multiple times with different media queries.
-			//  I hope this will never occur (Hey this way we have smaller bundles)
-			if(typeof item[0] !== "number" || !alreadyImportedModules[item[0]]) {
-				if(mediaQuery && !item[2]) {
-					item[2] = mediaQuery;
-				} else if(mediaQuery) {
-					item[2] = "(" + item[2] + ") and (" + mediaQuery + ")";
-				}
-				list.push(item);
-			}
-		}
-	};
-	return list;
-};
+module.exports = function (css) {
+  // get current location
+  var location = typeof window !== "undefined" && window.location;
 
-function cssWithMappingToString(item, useSourceMap) {
-	var content = item[1] || '';
-	var cssMapping = item[3];
-	if (!cssMapping) {
-		return content;
-	}
-
-	if (useSourceMap && typeof btoa === 'function') {
-		var sourceMapping = toComment(cssMapping);
-		var sourceURLs = cssMapping.sources.map(function (source) {
-			return '/*# sourceURL=' + cssMapping.sourceRoot + source + ' */'
-		});
-
-		return [content].concat(sourceURLs).concat([sourceMapping]).join('\n');
-	}
-
-	return [content].join('\n');
-}
-
-// Adapted from convert-source-map (MIT)
-function toComment(sourceMap) {
-	// eslint-disable-next-line no-undef
-	var base64 = btoa(unescape(encodeURIComponent(JSON.stringify(sourceMap))));
-	var data = 'sourceMappingURL=data:application/json;charset=utf-8;base64,' + base64;
-
-	return '/*# ' + data + ' */';
-}
-
-
-/***/ }),
-/* 3 */
-/***/ (function(module, exports, __webpack_require__) {
-
-exports = module.exports = __webpack_require__(2)(false);
-// imports
-
-
-// module
-exports.push([module.i, ".wariai-stats {\n  position: absolute;\n  bottom: 0;\n  right: 0;\n  margin: 0;\n  padding: 10px 20px;\n  color: #fff;\n  font-family: \"Source Sans Pro\", sans-serif;\n  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);\n  font-size: 1rem;\n  line-height: 1rem;\n  opacity: 0.6; }\n  .wariai-stats div {\n    display: inline; }\n", ""]);
-
-// exports
-
-
-/***/ }),
-/* 4 */
-/***/ (function(module, exports, __webpack_require__) {
-
-
-var content = __webpack_require__(3);
-
-if(typeof content === 'string') content = [[module.i, content, '']];
-
-var transform;
-var insertInto;
-
-
-
-var options = {"hmr":true}
-
-options.transform = transform
-options.insertInto = undefined;
-
-var update = __webpack_require__(1)(content, options);
-
-if(content.locals) module.exports = content.locals;
-
-if(false) {}
-
-/***/ }),
-/* 5 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-__webpack_require__(4);
-
-var dates = {
-  sessionStart: Date.now(),
-  lastAnswer: Date.now()
-};
-
-var isReady = function isReady() {
-  return document.querySelector("#stats") !== undefined;
-};
-
-var lastCompletedCount = 0;
-
-var getCompletedCount = function getCompletedCount() {
-  var completedCount = parseInt(document.querySelector("#completed-count").innerHTML);
-  if (completedCount !== lastCompletedCount) {
-    lastCompletedCount = completedCount;
-    dates.lastAnswer = Date.now();
+  if (!location) {
+    throw new Error("fixUrls requires window.location");
   }
-  return completedCount;
-};
 
-var getAvailableCount = function getAvailableCount() {
-  return parseInt(document.querySelector("#available-count").innerHTML);
-};
-
-var stopWatchElement = document.createElement("div");
-stopWatchElement.style.display = "inline";
-stopWatchElement.innerHTML = "\n    <i class=\"icon-time\" /> \n    <div id=\"wariai-stopwatch\"></div>\n  ";
-
-var timePerAnswerElement = document.createElement("div");
-timePerAnswerElement.style.display = "inline";
-timePerAnswerElement.innerHTML = "\n  <i class=\"icon-dashboard\" /> \n    <div id=\"wariai-rate\"></div>\n  ";
-
-var finishElement = document.createElement("div");
-finishElement.style.display = "inline";
-finishElement.innerHTML = "\n  <i class=\"icon-sun\" /> \n    <div id=\"wariai-finish\"></div>\n  ";
-
-var updateStopwatch = function updateStopwatch() {
-  var timeSinceLastAnswer = Math.floor((Date.now() - dates.lastAnswer) / 1000);
-  stopWatchElement.querySelector("div").innerHTML = timeSinceLastAnswer;
-};
-
-var updateTimePerAnswer = function updateTimePerAnswer() {
-  var totalTime = (Date.now() - dates.sessionStart) / 1000;
-  var completedCount = getCompletedCount();
-  timePerAnswerElement.querySelector("div").innerHTML = Math.floor(totalTime / completedCount);
-};
-
-var updateFinish = function updateFinish() {
-  var totalTime = Date.now() - dates.sessionStart;
-  var completedCount = getCompletedCount();
-  var rate = Math.floor(totalTime / completedCount);
-  var amountLeft = getAvailableCount();
-  var estimateTimeRemaining = amountLeft * rate;
-  var estimateFinishDate = new Date(Date.now() + estimateTimeRemaining);
-  var finishTime = estimateFinishDate.toLocaleString().split(", ")[1];
-  finishElement.querySelector("div").innerHTML = finishTime;
-};
-
-var start = function start() {
-  var container = document.createElement("div");
-  container.classList.add("wariai-stats");
-  container.appendChild(stopWatchElement);
-  container.appendChild(timePerAnswerElement);
-  container.appendChild(finishElement);
-  document.querySelector("#character").appendChild(container);
-  setInterval(function () {
-    updateStopwatch();
-    updateTimePerAnswer();
-    updateFinish();
-  }, 500);
-};
-
-var intervalId = setInterval(function () {
-  if (isReady) {
-    clearInterval(intervalId);
-    start();
+	// blank or null?
+	if (!css || typeof css !== "string") {
+	  return css;
   }
-}, 1000);
 
-document.onerror = function (e) {
-  alert(e);
+  var baseUrl = location.protocol + "//" + location.host;
+  var currentDir = baseUrl + location.pathname.replace(/\/[^\/]*$/, "/");
+
+	// convert each url(...)
+	/*
+	This regular expression is just a way to recursively match brackets within
+	a string.
+
+	 /url\s*\(  = Match on the word "url" with any whitespace after it and then a parens
+	   (  = Start a capturing group
+	     (?:  = Start a non-capturing group
+	         [^)(]  = Match anything that isn't a parentheses
+	         |  = OR
+	         \(  = Match a start parentheses
+	             (?:  = Start another non-capturing groups
+	                 [^)(]+  = Match anything that isn't a parentheses
+	                 |  = OR
+	                 \(  = Match a start parentheses
+	                     [^)(]*  = Match anything that isn't a parentheses
+	                 \)  = Match a end parentheses
+	             )  = End Group
+              *\) = Match anything and then a close parens
+          )  = Close non-capturing group
+          *  = Match anything
+       )  = Close capturing group
+	 \)  = Match a close parens
+
+	 /gi  = Get all matches, not the first.  Be case insensitive.
+	 */
+	var fixedCss = css.replace(/url\s*\(((?:[^)(]|\((?:[^)(]+|\([^)(]*\))*\))*)\)/gi, function(fullMatch, origUrl) {
+		// strip quotes (if they exist)
+		var unquotedOrigUrl = origUrl
+			.trim()
+			.replace(/^"(.*)"$/, function(o, $1){ return $1; })
+			.replace(/^'(.*)'$/, function(o, $1){ return $1; });
+
+		// already a full url? no change
+		if (/^(#|data:|http:\/\/|https:\/\/|file:\/\/\/|\s*$)/i.test(unquotedOrigUrl)) {
+		  return fullMatch;
+		}
+
+		// convert the url to a full url
+		var newUrl;
+
+		if (unquotedOrigUrl.indexOf("//") === 0) {
+		  	//TODO: should we add protocol?
+			newUrl = unquotedOrigUrl;
+		} else if (unquotedOrigUrl.indexOf("/") === 0) {
+			// path should be relative to the base url
+			newUrl = baseUrl + unquotedOrigUrl; // already starts with '/'
+		} else {
+			// path should be relative to current directory
+			newUrl = currentDir + unquotedOrigUrl.replace(/^\.\//, ""); // Strip leading './'
+		}
+
+		// send back the fixed url(...)
+		return "url(" + JSON.stringify(newUrl) + ")";
+	});
+
+	// send back the fixed css
+	return fixedCss;
 };
+
 
 /***/ })
 /******/ ]);
