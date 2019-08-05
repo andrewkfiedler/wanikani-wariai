@@ -14,3 +14,15 @@
     display: inline;
   }
 }
+
+.context-sentence-group {
+  font-size: 36px;
+}
+
+.context-sentence-group p:last-of-type {
+  filter: blur(10px) !important;
+}
+
+.context-sentence-group p:last-of-type:hover {
+  filter: none !important;
+}
