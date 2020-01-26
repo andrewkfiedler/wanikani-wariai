@@ -210,7 +210,7 @@ exports = module.exports = __webpack_require__(3)(false);
 
 
 // module
-exports.push([module.i, ".wariai-stats {\n  position: absolute;\n  bottom: 0;\n  right: 0;\n  margin: 0;\n  padding: 10px 20px;\n  color: #fff;\n  font-family: \"Source Sans Pro\", sans-serif;\n  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);\n  font-size: 1rem;\n  line-height: 1rem;\n  opacity: 0.6; }\n  .wariai-stats div {\n    display: inline; }\n", ""]);
+exports.push([module.i, ".wariai-stats {\n  position: absolute;\n  bottom: 0;\n  right: 0;\n  margin: 0;\n  padding: 10px 20px;\n  color: #fff;\n  font-family: \"Source Sans Pro\", sans-serif;\n  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);\n  font-size: 1rem;\n  line-height: 1rem;\n  opacity: 0.6; }\n  .wariai-stats div {\n    display: inline; }\n\n.context-sentence-group {\n  font-size: 36px; }\n\n.context-sentence-group p:last-of-type {\n  filter: blur(10px) !important; }\n\n.context-sentence-group p:last-of-type:hover {\n  filter: none !important; }\n", ""]);
 
 // exports
 
